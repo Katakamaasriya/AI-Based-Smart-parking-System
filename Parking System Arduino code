@@ -1,10 +1,8 @@
 #include <Servo.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-
-LiquidCrystal_I2C lcd(0x27, 16, 2);  // 16x2 LCD
+LiquidCrystal_I2C lcd(0x27, 16, 2); 
 Servo myservo;
-
 #define ir_enter 2
 #define ir_back 4
 #define ir_car1 5
@@ -15,14 +13,10 @@ Servo myservo;
 #define ir_car6 10
 #define ir_car7 11
 #define ir_car8 12
-
-int slots[8] = {0, 0, 0, 0, 0, 0, 0, 0};  // States of each slot (0: Empty, 1: Full)
-int slot = 8;  // Initial number of available slots is 8
-
+int slots[8] = {0, 0, 0, 0, 0, 0, 0, 0}; 
+int slot = 8; 
 void setup() {
 Serial.begin(9600);
-
-// Set IR sensor pins
 pinMode(ir_car1, INPUT);
 pinMode(ir_car2, INPUT);
 pinMode(ir_car3, INPUT);
@@ -33,10 +27,8 @@ pinMode(ir_car7, INPUT);
 pinMode(ir_car8, INPUT);
 pinMode(ir_enter, INPUT);
 pinMode(ir_back, INPUT);
-
 myservo.attach(3);
-myservo.write(0); // Initial position (Closed)
-
+myservo.write(0);
 lcd.init();
 lcd.backlight();
 lcd.setCursor(0, 0);
@@ -52,82 +44,62 @@ lcd.print("   System    ");
 delay(5000);
 lcd.clear();
 }
-
 void loop() {
 Read_Sensor();
-
-// Show available slot count
 lcd.setCursor(0, 0);
 lcd.print("Available: ");
 lcd.print(slot);
-
-// Display the status for slots 1-4 in the first row
 lcd.setCursor(0, 1);
 for (int i = 0; i < 4; i++) {
-lcd.print(i + 1);  // Print slot number
+lcd.print(i + 1);  
 lcd.print(":");
 if (slots[i] == 1) {
-lcd.print("F ");  // Full
+lcd.print("F ");  
 } else {
-lcd.print("E ");  // Empty
+lcd.print("E "); 
 }
 }
-
-delay(1000);  // Refresh the display every second
-
-// Update the second row with slots 5-8
+delay(1000); 
 lcd.clear();
 lcd.setCursor(0, 0);
 lcd.print("Available: ");
 lcd.print(slot);
-
 lcd.setCursor(0, 1);
 for (int i = 4; i < 8; i++) {
-lcd.print(i + 1);  // Print slot number
+lcd.print(i + 1); 
 lcd.print(":");
 if (slots[i] == 1) {
-lcd.print("F ");  // Full
+lcd.print("F "); 
 } else {
-lcd.print("E ");  // Empty
+lcd.print("E "); 
 }
 }
-
-delay(1000);  // Refresh the display every second
-
-// Handle Entry
-if (digitalRead(ir_enter) == LOW) {  // Vehicle detected at entry
+delay(1000); 
+if (digitalRead(ir_enter) == LOW) {
 Open_Gate();
-delay(2000);  // Keep gate open for 2 seconds (vehicle enters)
+delay(2000); 
 Close_Gate();
-Update_Slots(true);  // Vehicle entered, decrease available slots
+Update_Slots(true);  
 }
-
-// Handle Exit
-if (digitalRead(ir_back) == LOW) {  // Vehicle detected at exit
+if (digitalRead(ir_back) == LOW) {  
 Open_Gate();
-delay(2000);  // Keep gate open for 2 seconds (vehicle exits)
+delay(2000);  
 Close_Gate();
-Update_Slots(false);  // Vehicle exited, increase available slots
+Update_Slots(false);  
 }
 }
-
 void Open_Gate() {
-myservo.write(90);  // Open gate (servo goes to 0 degrees)
-delay(500);        // Wait for servo to fully open
+myservo.write(90);  
+delay(500);        
 }
-
 void Close_Gate() {
-myservo.write(0);  // Close gate (servo goes to 90 degrees)
-delay(500);         // Wait for servo to fully close
+myservo.write(0);  
+delay(500);         
 }
-
 void Read_Sensor() {
-// Reset slots state
 for (int i = 0; i < 8; i++) {
 slots[i] = 0;
 }
-
-// Update slots state based on sensor input
 if (digitalRead(ir_car1) == LOW) { slots[0] = 1; }
 if (digitalRead(ir_car2) == LOW) { slots[1] = 1; }
 if (digitalRead(ir_car3) == LOW) { slots[2] = 1; }
@@ -137,18 +109,13 @@ if (digitalRead(ir_car6) == LOW) { slots[5] = 1; }
 if (digitalRead(ir_car7) == LOW) { slots[6] = 1; }
 if (digitalRead(ir_car8) == LOW) { slots[7] = 1; }
 }
-
 void Update_Slots(bool vehicleEntered) {
 int total = 0;
-
-// Update the slots array
 for (int i = 0; i < 8; i++) {
 total += slots[i];
 }
-
-// Adjust the available slots based on whether the vehicle entered or exited
 if (vehicleEntered) {
-slot = 8 - total;  // Decrease available slots
+slot = 8 - total;  
 } else {
 slot = 8 - total;  // Increase available slots
 }
